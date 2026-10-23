@@ -1,0 +1,70 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: audit + install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax check every module
+        run: |
+          set -e
+          find assets bin scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print | while read -r file; do
+            node --check "$file"
+          done
+
+      - name: Audit the skill payload against its own rules
+        run: node scripts/audit.mjs assets examples
+
+      - name: Doctor
+        run: node bin/ui-skill.mjs doctor
+
+      - name: Install into a throwaway project
+        run: |
+          set -e
+          work="$(mktemp -d)"
+          cd "$work"
+          node "$GITHUB_WORKSPACE/bin/ui-skill.mjs" install --project --target claude --target qoder
+          test -f .claude/skills/ui-motion/SKILL.md
+          test -f .claude/skills/ui-motion/references/01-design-language.md
+          test -f .claude/skills/ui-motion/assets/js/gl/ShaderCanvas.js
+          test -f .qoder/skills/ui-motion/assets/css/tokens.css
+
+      - name: Rules targets render
+        run: |
+          set -e
+          work="$(mktemp -d)"
+          cd "$work"
+          node "$GITHUB_WORKSPACE/bin/ui-skill.mjs" install --project --target cursor --target windsurf --target agents
+          grep -q '^---' .cursor/rules/ui-motion.mdc
+          grep -q 'ui-motion' .windsurf/rules/ui-motion.md
+          test -f ui-motion.agents.md
+
+      - name: Package contents
+        run: npm pack --dry-run
+
+      - name: Reference demo is present and self-contained
+        run: |
+          set -e
+          for file in examples/index.html SKILL.md LICENSE README.md \
+                      assets/css/tokens.css assets/css/motion.css assets/css/sections.css \
+                      assets/js/reveal.js assets/js/scroll.js assets/js/pointer.js \
+                      assets/js/preloader.js assets/js/gl/ShaderCanvas.js \
+                      assets/js/gl/shaders/aurora.js; do
+            test -s "$file" || { echo "missing: $file"; exit 1; }
+          done
+          echo "payload complete"

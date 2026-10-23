@@ -1,0 +1,59 @@
+{
+  "name": "ui-skill",
+  "version": "1.0.0",
+  "description": "Installer for ui-motion - an agent skill that builds websites to award-site standard: layered scroll motion, masked type reveals, WebGL accents, a token-driven CSS system, and a hard performance and accessibility budget.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Whalerr09",
+  "homepage": "https://github.com/Whalerr09/UI-skill#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Whalerr09/UI-skill.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Whalerr09/UI-skill/issues"
+  },
+  "keywords": [
+    "ai-skill",
+    "agent-skill",
+    "claude-code",
+    "cursor",
+    "qoder",
+    "windsurf",
+    "webgl",
+    "shader",
+    "scroll-animation",
+    "design-system",
+    "css",
+    "landing-page"
+  ],
+  "bin": {
+    "ui-skill": "./bin/ui-skill.mjs"
+  },
+  "files": [
+    "bin/",
+    "SKILL.md",
+    "README.md",
+    "LICENSE",
+    "references/",
+    "assets/",
+    "examples/",
+    "scripts/",
+    "install.ps1",
+    "install.sh"
+  ],
+  "scripts": {
+    "skill:install": "node ./bin/ui-skill.mjs install",
+    "skill:doctor": "node ./bin/ui-skill.mjs doctor",
+    "audit": "node ./scripts/audit.mjs",
+    "demo": "node ./scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ]
+}

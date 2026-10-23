@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build output
+dist/
+lib-dist/
+build/
+out/
+
+# caches
+.vite/
+.cache/
+.temp/
+.tmp/
+coverage/
+
+# logs
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# editor / OS
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# local env
+.env
+.env.local
+.env.*.local
+
+# local installs of the skill (do not commit what the installer writes)
+.claude/skills/ui-motion/
+.qoder/skills/ui-motion/
+.cursor/rules/ui-motion.mdc
+.windsurf/rules/ui-motion.md
+.github/instructions/ui-motion.instructions.md
+ui-motion.agents.md

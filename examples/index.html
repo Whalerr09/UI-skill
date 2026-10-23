@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en" data-scheme="dark" data-palette="ink">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hollow — a reference build for ui-motion</title>
+<meta name="description" content="A complete reference page assembled from the ui-motion skill: masked type, scroll choreography, a token-driven CSS system, and one WebGL signature moment.">
+<meta name="theme-color" content="#05070a">
+
+<!-- The reveal gate must be set before the body parses, or content flashes. -->
+<script>document.documentElement.classList.add('js');</script>
+
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/sections.css">
+<link rel="stylesheet" href="../assets/css/motion.css">
+
+<style>
+  /* Page-local: preloader + demo-only plates. Everything else is shared. */
+  #pre {
+    position: fixed; inset: 0; z-index: 100;
+    display: grid; place-items: center;
+    background: var(--page);
+    transition: opacity .8s var(--ease), visibility .8s;
+  }
+  #pre[hidden] { display: none; }
+  #pre.done { opacity: 0; visibility: hidden; pointer-events: none; }
+  .pre__inner { width: min(360px, 72vw); }
+  .pre__mark {
+    margin: 0 auto var(--s-5);
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid var(--line-hard);
+    border-top-color: var(--accent);
+    animation: spin-slow 1.4s linear infinite;
+  }
+  .pre__bar { position: relative; height: 1px; background: var(--line); overflow: hidden; }
+  .pre__bar i { position: absolute; inset: 0 100% 0 0; background: var(--fg); transition: right .35s linear; }
+  .pre__meta {
+    display: flex; justify-content: space-between; margin-top: var(--s-2);
+    font-family: var(--font-mono); font-size: var(--t-eyebrow);
+    letter-spacing: .2em; text-transform: uppercase; color: var(--fg-faint);
+  }
+  body.is-locked { overflow: hidden; height: 100vh; }
+
+  /* The hero scene: fallback paints first, shader mounts over it. */
+  .hero__scene { background: var(--page); }
+  .scene-fallback {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(58% 52% at 28% 34%, color-mix(in oklab, var(--accent) 46%, transparent), transparent 70%),
+      radial-gradient(66% 58% at 76% 62%, color-mix(in oklab, var(--wall) 92%, black), transparent 72%),
+      var(--page);
+  }
+
+  /* Demo plates stand in for photography: pure CSS, zero requests. */
+  .plate { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; }
+  .plate::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 42%, rgba(0, 0, 0, .55));
+  }
+  .plate--1 { background: radial-gradient(120% 120% at 20% 10%, #2a1512, #05070a 62%), var(--ink-2); }
+  .plate--2 { background: conic-gradient(from 210deg at 60% 40%, #101820, #2b1a16, #0a0e12, #101820); }
+  .plate--3 { background: radial-gradient(90% 90% at 70% 30%, #1d2a22, #060a08 60%), var(--ink-2); }
+  .plate--4 { background: linear-gradient(135deg, #1a1d24 0%, #0a0c10 45%, #241416 100%); }
+  .plate__tag {
+    position: absolute; left: var(--s-4); bottom: var(--s-3); z-index: 2;
+    font-family: var(--font-mono); font-size: var(--t-eyebrow);
+    letter-spacing: .2em; text-transform: uppercase; color: rgba(255, 255, 255, .58);
+  }
+  .hero__chapters {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap);
+    padding-top: var(--s-4); border-top: 1px solid var(--line-soft);
+  }
+  .chip { display: grid; grid-template-columns: auto 1fr; gap: var(--s-3); align-items: start; }
+  .chip b {
+    display: block; font-size: var(--t-eyebrow); font-weight: 500;
+    letter-spacing: .2em; text-transform: uppercase; color: var(--fg-muted);
+    margin-bottom: var(--s-1);
+  }
+  .chip i {
+    font-style: normal; font-family: var(--font-mono);
+    font-size: var(--t-h3); letter-spacing: -.02em; color: var(--fg-faint);
+  }
+  .chip p { margin: 0; font-size: var(--t-xs); line-height: 1.5; color: var(--fg-faint); }
+  @media (max-width: 899px) {
+    .hero__chapters { grid-template-columns: 1fr 1fr; }
+  }
+  .spec {
+    position: relative; overflow: hidden; border-radius: var(--r-lg);
+    border: 0.5px solid var(--line);
+    background: radial-gradient(120% 120% at 30% 20%, #161a20, #070a0e 60%);
+    min-height: 100%;
+  }
+  .spec__glare {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(45% 45% at 50% 50%, rgba(255, 255, 255, .18), transparent 70%);
+    opacity: 0; transition: opacity var(--dur-2) var(--ease);
+  }
+  .spec:hover .spec__glare { opacity: 1; }
+  .close { overflow: hidden; }
+  .close::before {
+    content: ""; position: absolute; left: 50%; top: 50%;
+    width: min(760px, 90vw); aspect-ratio: 1; transform: translate(-50%, -50%);
+    background: radial-gradient(50% 50% at 50% 50%, var(--accent-soft), transparent 70%);
+    filter: blur(30px); pointer-events: none;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="pre" aria-hidden="true">
+  <div class="pre__inner">
+    <div class="pre__mark"></div>
+    <div class="pre__bar"><i></i></div>
+    <div class="pre__meta"><span>Assembling</span><b>0%</b></div>
+  </div>
+</div>
+
+<a class="skip" href="#main">Skip to content</a>
+<div id="top-sentinel" aria-hidden="true"></div>
+<div class="progress" aria-hidden="true"><i></i></div>
+
+<header class="nav">
+  <a class="nav__brand" href="#top" aria-label="Hollow, home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+      <circle cx="12" cy="12" r="8.5"></circle>
+      <path d="M12 3.5v17M3.5 12h17"></path>
+    </svg>
+    Hollow
+  </a>
+
+  <nav class="nav__links" aria-label="Primary">
+    <a class="nav-link" href="#work"><span>Work</span><span class="alt" aria-hidden="true">Work</span></a>
+    <a class="nav-link" href="#method"><span>Method</span><span class="alt" aria-hidden="true">Method</span></a>
+    <a class="nav-link" href="#pricing"><span>Pricing</span><span class="alt" aria-hidden="true">Pricing</span></a>
+    <a class="nav-link" href="#faq"><span>FAQ</span><span class="alt" aria-hidden="true">FAQ</span></a>
+  </nav>
+
+  <a class="btn btn--ghost nav__cta" href="#start" data-magnetic>Start a project</a>
+
+  <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav-sheet" aria-label="Open menu">
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+      <path d="M0 1h20M0 7h14M0 13h20"></path>
+    </svg>
+  </button>
+</header>
+
+<div class="nav-sheet" id="nav-sheet" data-open="false" hidden>
+  <a href="#work">Work</a>
+  <a href="#method">Method</a>
+  <a href="#pricing">Pricing</a>
+  <a href="#faq">FAQ</a>
+  <a class="btn btn--fill" href="#start">Start a project</a>
+</div>
+
+<main id="main">
+
+  <!-- ============================================================ hero -->
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="hero__scene" id="hero-scene" aria-hidden="true">
+      <div class="scene-fallback"></div>
+    </div>
+    <div class="hero__scrim" aria-hidden="true"></div>
+
+    <div class="hero__top">
+      <p class="eyebrow" data-rv="fade">
+        <span style="width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent)"></span>
+        Reference build — ui-motion
+      </p>
+
+      <h1 class="display" id="hero-title" data-rv="words">
+        Make the page feel like it was commissioned
+      </h1>
+
+      <p class="lede" data-rv="up">
+        One palette, one easing signature, one moment worth screenshotting. Everything
+        else is restraint.
+      </p>
+
+      <div class="hero__actions" data-rv="up">
+        <a class="btn btn--fill btn--lg" href="#start" data-magnetic>Start a project</a>
+        <a class="btn btn--text u-line" href="#method">See the method</a>
+      </div>
+    </div>
+
+    <div class="hero__spacer"></div>
+
+    <div class="hero__foot">
+      <div class="cue" data-hero-exit data-at="0.10" data-span="0.30" style="justify-content:flex-end;margin-bottom:var(--s-3)">
+        <span>Scroll</span>
+        <span class="cue__track"><i></i></span>
+      </div>
+
+      <div class="hero__chapters">
+        <div class="chip" data-hero-exit data-at="0.20" data-span="0.30">
+          <i>01</i>
+          <div><b>Palette</b><p>Ink, bone, one vermilion accent.</p></div>
+        </div>
+        <div class="chip" data-hero-exit data-at="0.30" data-span="0.30">
+          <i>02</i>
+          <div><b>Type</b><p>Instrument Serif over Geist, tracked tight.</p></div>
+        </div>
+        <div class="chip" data-hero-exit data-at="0.40" data-span="0.30">
+          <i>03</i>
+          <div><b>Motion</b><p>Ninety milliseconds behind the eye.</p></div>
+        </div>
+        <div class="chip" data-hero-exit data-at="0.50" data-span="0.30">
+          <i>04</i>
+          <div><b>Signature</b><p>One shader. Nothing competes with it.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================== proof -->
+  <section class="proof" aria-label="Results">
+    <div class="proof__inner">
+      <p class="proof__label">Measured on the reference build</p>
+      <ul class="stats" style="margin-left:auto;display:flex;gap:var(--s-7);flex-wrap:wrap">
+        <li><b data-count="1860" data-suffix="ms">1,860ms</b><span>LCP, mobile</span></li>
+        <li><b data-count="12" data-suffix="KB">12KB</b><span>JS, gzip</span></li>
+        <li><b data-count="1">1</b><span>WebGL context</span></li>
+        <li><b data-count="0">0</b><span>layout shifts</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ========================================================== method -->
+  <section class="sec" id="method" aria-labelledby="method-title">
+    <div class="sec__inner">
+      <div class="sec__head">
+        <p class="eyebrow" data-rv="fade">The method</p>
+        <h2 class="h2-sec" id="method-title" data-rv="up">Three decisions carry the whole page</h2>
+        <p class="lede" data-rv="up">
+          Not forty animations. A palette that holds, a type scale that behaves, and one
+          motion curve reused until it becomes the brand.
+        </p>
+      </div>
+
+      <div class="triad">
+        <article class="feature lift" data-rv="up">
+          <svg class="feature__icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 3a9 9 0 0 0 0 18"></path></svg>
+          <h3>Tokens, never literals</h3>
+          <p>Six surfaces, six text values, four radii, four curves. A component cannot invent a seventh grey.</p>
+          <p class="feature__meta">01 — system</p>
+        </article>
+        <article class="feature lift" data-rv="up">
+          <svg class="feature__icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17c4-9 7-9 9-2s5 7 9-3"></path></svg>
+          <h3>One easing signature</h3>
+          <p>Everything entering the viewport uses the same fast-out curve. Repetition is what reads as craft.</p>
+          <p class="feature__meta">02 — motion</p>
+        </article>
+        <article class="feature lift" data-rv="up">
+          <svg class="feature__icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"></rect><path d="M3 12h18M12 3v18"></path></svg>
+          <h3>One signature moment</h3>
+          <p>A single shader behind the hero. It pauses offscreen, freezes under reduced motion, and costs one context.</p>
+          <p class="feature__meta">03 — signature</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ bento -->
+  <section class="sec sec--tight" aria-labelledby="bento-title">
+    <div class="sec__inner">
+      <div class="sec__head">
+        <p class="eyebrow" data-rv="fade">What ships</p>
+        <h2 class="h2-sec" id="bento-title" data-rv="up">The same eight primitives, every time</h2>
+      </div>
+
+      <div class="bento">
+        <div class="spec" data-tilt="6" data-rv="up">
+          <div class="spec__glare" data-tilt-specular aria-hidden="true"></div>
+          <p class="eyebrow" style="margin-bottom:var(--s-4)">01 — signature</p>
+          <h3 style="font-size:var(--t-h2);max-width:16ch;letter-spacing:-.018em">A field of light that never repeats</h3>
+          <p class="muted" style="max-width:38ch;font-size:var(--t-sm)">
+            Five octaves of value noise, warped twice, banded into curtains. Colours are read
+            from the same tokens the rest of the page uses.
+          </p>
+          <p class="feature__meta" style="position:absolute;left:var(--s-5);bottom:var(--s-5)">82° 19′ N — 40s cycle</p>
+        </div>
+
+        <div class="card" data-rv="up">
+          <p class="eyebrow">02 — type</p>
+          <h3 style="margin-top:var(--s-3)">Masked words</h3>
+          <p class="muted" style="font-size:var(--t-sm)">Seventy-two milliseconds apart, capped at fourteen words.</p>
+        </div>
+
+        <div class="card" data-rv="up">
+          <p class="eyebrow">03 — scroll</p>
+          <h3 style="margin-top:var(--s-3)">One rAF</h3>
+          <p class="muted" style="font-size:var(--t-sm)">Every consumer reads a custom property. None of them measure layout.</p>
+        </div>
+
+        <div class="card" data-rv="up">
+          <p class="eyebrow">04 — degrade</p>
+          <h3 style="margin-top:var(--s-3)">Reduced motion</h3>
+          <p class="muted" style="font-size:var(--t-sm)">The shader renders a still frame; nothing else moves.</p>
+        </div>
+
+        <div class="card" data-rv="up">
+          <p class="eyebrow">05 — budget</p>
+          <h3 style="margin-top:var(--s-3)">180KB of JS</h3>
+          <p class="muted" style="font-size:var(--t-sm)">This page uses 12. No animation library.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================== gallery -->
+  <section class="sec" id="work" aria-labelledby="work-title">
+    <div class="sec__inner">
+      <div class="sec__head">
+        <p class="eyebrow" data-rv="fade">Work</p>
+        <h2 class="h2-sec" id="work-title" data-rv="up">Same grammar, different subject</h2>
+      </div>
+
+      <div class="gallery long-list">
+        <figure data-rv="up">
+          <div class="plate plate--1"><span class="plate__tag">Ceramics — 01</span></div>
+          <figcaption>Ash glaze, 42 pieces</figcaption>
+        </figure>
+        <figure data-rv="up">
+          <div class="plate plate--2"><span class="plate__tag">Night index — 02</span></div>
+          <figcaption>Identity for a Kyoto archive</figcaption>
+        </figure>
+        <figure data-rv="up">
+          <div class="plate plate--3"><span class="plate__tag">Fathom — 03</span></div>
+          <figcaption>Sound, water, one long scroll</figcaption>
+        </figure>
+        <figure data-rv="up">
+          <div class="plate plate--4"><span class="plate__tag">Hollow — 04</span></div>
+          <figcaption>Instrument panel for a metal shop</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ quote -->
+  <section class="sec sec--capped" aria-label="Testimonial">
+    <figure class="quote" data-rv="up">
+      <blockquote>
+        <p>“It reads as one object. Nothing on the page argues with anything else, and it
+        still loads in under two seconds on a train.”</p>
+      </blockquote>
+      <figcaption>
+        <span aria-hidden="true" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(140deg,var(--accent),var(--wall))"></span>
+        <span><b>Dana Whitfield</b><i>Head of Platform, Northwind</i></span>
+      </figcaption>
+    </figure>
+  </section>
+
+  <!-- ========================================================== pricing -->
+  <section class="sec" id="pricing" aria-labelledby="pricing-title">
+    <div class="sec__inner">
+      <div class="sec__head">
+        <p class="eyebrow" data-rv="fade">Engagements</p>
+        <h2 class="h2-sec" id="pricing-title" data-rv="up">One page, done properly</h2>
+      </div>
+
+      <div class="plans">
+        <article class="plan" data-rv="up">
+          <p class="plan__name">Single page</p>
+          <p class="plan__price"><b>$6,200</b><span>one-off</span></p>
+          <ul>
+            <li>One landing page, eight sections</li>
+            <li>Design tokens + component sheet</li>
+            <li>Motion system, reduced-motion pass</li>
+          </ul>
+          <a class="btn btn--ghost" href="#start">Enquire</a>
+        </article>
+
+        <article class="plan plan--featured" data-rv="up">
+          <p class="plan__name">Flagship <span class="mono faint">— most taken</span></p>
+          <p class="plan__price"><b>$14,800</b><span>one-off</span></p>
+          <ul>
+            <li>Everything in Single page</li>
+            <li>One signature moment (shader or 3D)</li>
+            <li>Pinned narrative section</li>
+            <li>Performance budget signed off in writing</li>
+          </ul>
+          <a class="btn btn--fill" href="#start" data-magnetic>Start a project</a>
+        </article>
+
+        <article class="plan" data-rv="up">
+          <p class="plan__name">Retainer</p>
+          <p class="plan__price"><b>$3,400</b><span>/ month</span></p>
+          <ul>
+            <li>Two shipping days per week</li>
+            <li>Design system upkeep</li>
+            <li>Quarterly motion audit</li>
+          </ul>
+          <a class="btn btn--ghost" href="#start">Enquire</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================== faq -->
+  <section class="sec sec--tight" id="faq" aria-labelledby="faq-title">
+    <div class="sec__inner">
+      <div class="sec__head">
+        <p class="eyebrow" data-rv="fade">Questions</p>
+        <h2 class="h2-sec" id="faq-title" data-rv="up">Before you write</h2>
+      </div>
+
+      <div class="faq" data-rv="up">
+        <details class="acc" open>
+          <summary>Does this need an animation library?</summary>
+          <div class="acc-body"><div><p>No. The reveal engine is one IntersectionObserver, the scroll engine is one rAF, and the shader host is dependency-free. A library is only justified when the project already has one.</p></div></div>
+        </details>
+        <details class="acc">
+          <summary>What happens without WebGL?</summary>
+          <div class="acc-body"><div><p>The gradient fallback paints first and stays. It is designed to look complete on its own, so a failed context is invisible to the visitor.</p></div></div>
+        </details>
+        <details class="acc">
+          <summary>And with reduced motion?</summary>
+          <div class="acc-body"><div><p>Every travel animation becomes an instant state, the shader renders one still frame, parallax and the cursor field never initialise, and the pinned section unpins.</p></div></div>
+        </details>
+        <details class="acc">
+          <summary>Can I use this with React or Astro?</summary>
+          <div class="acc-body"><div><p>Yes. The CSS is framework-agnostic. The JS modules are plain ES modules; wrap them in an effect or a client island. See references/09-stack-adapters.md.</p></div></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ close -->
+  <section class="close" id="start" aria-labelledby="close-title">
+    <h2 class="display" id="close-title" data-rv="words">Start with one page</h2>
+    <a class="btn btn--fill btn--lg" href="#" data-magnetic>Create an account</a>
+    <p class="fineprint">No card required · two minutes · cancel whenever</p>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="foot__grid">
+    <div class="foot__brand">
+      <a class="nav__brand" href="#top" aria-label="Hollow, home" style="margin-bottom:var(--s-3)">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5"></circle><path d="M12 3.5v17M3.5 12h17"></path>
+        </svg>
+        Hollow
+      </a>
+      <p>Motion, type and restraint — assembled from the ui-motion skill.</p>
+    </div>
+    <div><h4>Build</h4><ul><li><a href="#method">Method</a></li><li><a href="#work">Work</a></li><li><a href="#pricing">Pricing</a></li></ul></div>
+    <div><h4>Read</h4><ul><li><a href="#faq">FAQ</a></li><li><a href="#top">Tokens</a></li><li><a href="#top">Motion</a></li></ul></div>
+    <div><h4>Contact</h4><ul><li><a href="#start">Start a project</a></li><li><a href="#top">hello@hollow.studio</a></li></ul></div>
+  </div>
+  <div class="foot__base">
+    <span>© 2026 Hollow Studio</span>
+    <span>Built as a reference for ui-motion</span>
+  </div>
+</footer>
+
+<div class="cursor-glow" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<script type="module">
+  import { mountMotion } from '../assets/js/reveal.js';
+  import { mountScroll } from '../assets/js/scroll.js';
+  import { initPointer } from '../assets/js/pointer.js';
+  import { initPreloader } from '../assets/js/preloader.js';
+  import { mountAurora } from '../assets/js/gl/shaders/aurora.js';
+
+  // --- preloader -----------------------------------------------------------
+  const pre = initPreloader();
+
+  // --- reveals + counters --------------------------------------------------
+  const motion = mountMotion();
+
+  // --- scroll consumers ----------------------------------------------------
+  const scroll = mountScroll();
+
+  // --- pointer enhancements (no-ops on touch / reduced motion) -------------
+  const pointer = initPointer();
+
+  // --- the one signature moment -------------------------------------------
+  const aurora = mountAurora(document.querySelector('#hero-scene'), { fps: 60 });
+
+  // --- mobile sheet (native <details> is not the right shape here) ---------
+  const toggle = document.querySelector('.nav__toggle');
+  const sheet = document.querySelector('#nav-sheet');
+
+  const setSheet = (open) => {
+    if (!toggle || !sheet) return;
+    toggle.setAttribute('aria-expanded', String(open));
+    sheet.dataset.open = String(open);
+    sheet.hidden = !open;
+  };
+
+  toggle?.addEventListener('click', () => {
+    setSheet(toggle.getAttribute('aria-expanded') !== 'true');
+  });
+
+  sheet?.addEventListener('click', (event) => {
+    if (event.target.closest('a')) setSheet(false);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setSheet(false);
+  });
+
+  // --- teardown (single-page apps should call this on unmount) -------------
+  window.addEventListener('pagehide', () => {
+    pre.destroy();
+    motion.destroy();
+    scroll.destroy();
+    pointer.destroy();
+    aurora.destroy();
+  });
+</script>
+
+</body>
+</html>

@@ -6,6 +6,7 @@
 #   ./install.sh --target cursor --project
 #   ./install.sh --all --link
 #   curl -fsSL https://raw.githubusercontent.com/Whalerr09/UI-skill/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Whalerr09/UI-skill/main/install.sh | bash -s -- --force --target cursor --project
 #
 # Node is optional. With Node the full installer runs (every target, distilled
 # rules files, doctor). Without Node this script copies the skill folder into

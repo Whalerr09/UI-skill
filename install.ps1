@@ -4,10 +4,12 @@
     Install the ui-motion agent skill.
 
 .DESCRIPTION
-    Copies (or links) SKILL.md, references/ and assets/ into your agent's skill
-    directory so the agent can build award-grade websites: layered scroll motion,
-    masked type reveals, WebGL accents, a token-driven CSS system, and a hard
-    performance and accessibility budget.
+    Copies (or links) the skill folder - skills/ui-motion, the same payload the
+    Claude and Qoder plugin manifests ship: SKILL.md, references/, assets/ and
+    scripts/ - into your agent's skill directory so the agent can build
+    award-grade websites: layered scroll motion, masked type reveals, WebGL
+    accents, a token-driven CSS system, and a hard performance and
+    accessibility budget.
 
     Node is optional. With Node the full installer runs (all targets, distilled
     rules files, doctor). Without Node this script copies the skill folder into

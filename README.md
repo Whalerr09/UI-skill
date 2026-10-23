@@ -39,7 +39,19 @@ curl -fsSL https://raw.githubusercontent.com/Whalerr09/UI-skill/main/install.sh 
 
 Each one fetches the repository, runs `bin/ui-skill.mjs`, and installs `skills/ui-motion/` into
 `~/.claude/skills/ui-motion` and `~/.qoder/skills/ui-motion`. Without Node they fall back to a plain
-folder copy of the same payload. Re-run with `-Force` / `--force` to replace.
+folder copy of the same payload.
+
+To force a replace or pick targets without cloning, hand the fetched script its arguments:
+
+```powershell
+# Windows
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/Whalerr09/UI-skill/main/install.ps1))) -Force -Target claude
+```
+
+```bash
+# macOS / Linux
+curl -fsSL https://raw.githubusercontent.com/Whalerr09/UI-skill/main/install.sh | bash -s -- --force --target cursor --project
+```
 
 ### Claude Code — as a plugin
 

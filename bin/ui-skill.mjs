@@ -16,7 +16,7 @@
 
 import { cp, mkdir, readFile, readdir, rm, stat, symlink, writeFile } from 'node:fs/promises';
 import { existsSync, readdirSync } from 'node:fs';
-import { dirname, join, relative, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 
@@ -43,6 +43,16 @@ const ok = (text) => paint(C.green, `✓ ${text}`);
 const warn = (text) => paint(C.yellow, `! ${text}`);
 const fail = (text) => paint(C.red, `✗ ${text}`);
 const info = (text) => paint(C.dim, text);
+
+/**
+ * Show a project install as a tidy relative path, and everything else in full.
+ * `../../../../.claude/skills/...` from a temp folder tells nobody where the
+ * files went, so only shorten when the destination is inside the current tree.
+ */
+function displayPath(dest) {
+  const rel = relative(process.cwd(), dest);
+  return rel && !rel.startsWith('..') && !isAbsolute(rel) ? rel : dest;
+}
 
 /* ------------------------------------------------------------------ targets */
 
@@ -388,15 +398,15 @@ async function cmdInstall(flags) {
       if (target.kind === 'skills') {
         const result = await installSkillFolder(dir, flags);
         results.push({ name, ...result });
-        if (result.status === 'exists') console.log(`${warn(`${name}: ${relative(process.cwd(), result.dest) || result.dest}`)} ${info('already installed — use --force to replace')}`);
-        else if (result.status === 'linked') console.log(ok(`${name}: linked ${relative(process.cwd(), result.dest) || result.dest}`));
-        else console.log(ok(`${name}: copied ${relative(process.cwd(), result.dest) || result.dest}${result.note ? info(` (${result.note})`) : ''}`));
+        if (result.status === 'exists') console.log(`${warn(`${name}: ${displayPath(result.dest)}`)} ${info('already installed — use --force to replace')}`);
+        else if (result.status === 'linked') console.log(ok(`${name}: linked ${displayPath(result.dest)}`));
+        else console.log(ok(`${name}: copied ${displayPath(result.dest)}${result.note ? info(` (${result.note})`) : ''}`));
       } else {
         const result = await installRulesFile(dir, target.file, flags);
         results.push({ name, ...result });
-        if (result.status === 'written') console.log(ok(`${name}: wrote ${relative(process.cwd(), result.dest) || result.dest}`));
-        else if (result.status === 'exists') console.log(`${warn(`${name}: ${result.dest}`)} ${info('already up to date — use --force to refresh')}`);
-        else console.log(`${warn(`${name}: ${result.dest}`)} ${info('exists with different content — use --force to replace')}`);
+        if (result.status === 'written') console.log(ok(`${name}: wrote ${displayPath(result.dest)}`));
+        else if (result.status === 'exists') console.log(`${warn(`${name}: ${displayPath(result.dest)}`)} ${info('already up to date — use --force to refresh')}`);
+        else console.log(`${warn(`${name}: ${displayPath(result.dest)}`)} ${info('exists with different content — use --force to replace')}`);
       }
     } catch (error) {
       console.log(fail(`${name}: ${error.message}`));

@@ -39,7 +39,8 @@
     "scripts/",
     ".claude-plugin/",
     ".qoder-plugin/",
-    "assets/logo.svg",
+    "assets/logo.png",
+    "assets/logo-icon.png",
     "install.ps1",
     "install.sh"
   ],

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/logo.png" alt="Whale Devs" width="150" height="150">
+</p>
+
 # ui-motion — an agent skill for websites that feel commissioned
 
 Drop one folder into your agent's skill directory and it stops producing gradient-purple template pages. It produces sites with a palette that holds, masked type that reveals on a curve, one WebGL signature moment that earns its ~8KB, and a performance budget it has to sign off against.
@@ -269,7 +273,8 @@ glow. Open it, read the source next to the references, then delete it.
 .claude-plugin/marketplace.json     marketplace listing that repo as `ui-skill@ui-motion`
 .qoder-plugin/plugin.json           Qoder plugin manifest, logo, skills path
 .qoder-plugin/marketplace.json      Qoder marketplace, github source
-assets/logo.svg                     plugin logo
+assets/logo.png                     Whale Devs lockup on an ink tile (README, Pages)
+assets/logo-icon.png                mark only — plugin logo and favicon
 skills/ui-motion/
   SKILL.md                          the manual the agent works from
   references/
@@ -363,6 +368,8 @@ The motion values, layering discipline, WebGL lifecycle contract and audit rules
 from production work in **ThreeUI Community** — 50 parent components and 111 routes of hand-built
 scroll choreography, shaders and CSS — then rewritten as stack-neutral rules with the numbers
 attached.
+
+Maintained by [Whalerr09](https://github.com/Whalerr09) · Whale Devs.
 
 MIT. Keep `SKILL.md` and `LICENSE` together if you redistribute.
 

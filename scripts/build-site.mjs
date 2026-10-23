@@ -28,7 +28,7 @@ const LANDING = /* html */ `<!DOCTYPE html>
 <title>ui-motion — the agent skill for websites that feel commissioned</title>
 <meta name="description" content="Layered scroll motion, masked type reveals, WebGL accents, token-driven CSS and a hard performance budget, packaged as an installable skill for Claude Code, Qoder, Cursor and friends.">
 <meta name="theme-color" content="#05070a">
-<link rel="icon" href="__BASE__/assets/logo.svg" type="image/svg+xml">
+<link rel="icon" href="__BASE__/assets/logo-icon.png" type="image/png">
 <script>document.documentElement.classList.add('js');</script>
 <link rel="stylesheet" href="__BASE__/__SKILL__/assets/css/tokens.css">
 <link rel="stylesheet" href="__BASE__/__SKILL__/assets/css/motion.css">
@@ -113,8 +113,11 @@ const LANDING = /* html */ `<!DOCTYPE html>
 </main>
 
 <footer style="border-top:1px solid var(--line-soft);padding-block:var(--s-6)">
-  <div class="container" style="display:flex;gap:var(--s-4);flex-wrap:wrap;justify-content:space-between;font-size:var(--t-xs);color:var(--fg-faint)">
-    <span>ui-motion · MIT · Whalerr09</span>
+  <div class="container" style="display:flex;gap:var(--s-4);flex-wrap:wrap;align-items:center;justify-content:space-between;font-size:var(--t-xs);color:var(--fg-faint)">
+    <span style="display:inline-flex;align-items:center;gap:var(--s-3)">
+      <img src="__BASE__/assets/logo-icon.png" alt="Whale Devs" width="22" height="22">
+      ui-motion · MIT · Whale Devs
+    </span>
     <a href="https://github.com/Whalerr09/UI-skill" style="color:var(--fg-muted)">github.com/Whalerr09/UI-skill</a>
   </div>
 </footer>
@@ -136,7 +139,7 @@ await mkdir(OUT, { recursive: true });
 // The demo imports the skill by relative path, so the payload goes with it.
 await cp(join(ROOT, 'examples'), join(OUT, 'examples'), { recursive: true });
 await cp(join(ROOT, SKILL, 'assets'), join(OUT, SKILL, 'assets'), { recursive: true });
-await cp(join(ROOT, 'assets', 'logo.svg'), join(OUT, 'assets', 'logo.svg'));
+await cp(join(ROOT, 'assets'), join(OUT, 'assets'), { recursive: true });
 
 const html = LANDING
   .replaceAll('__BASE__', BASE)

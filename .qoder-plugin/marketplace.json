@@ -1,0 +1,27 @@
+{
+  "name": "ui-motion",
+  "description": "The ui-motion skill: build websites that feel commissioned rather than assembled — layered scroll motion, masked type reveals, WebGL accents, token-driven CSS, audited performance and accessibility budgets.",
+  "owner": {
+    "name": "Whalerr09",
+    "url": "https://github.com/Whalerr09"
+  },
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "ui-skill",
+      "description": "Award-site motion, masked type, WebGL accents, token CSS system, performance budget, and a static rule audit for any website build.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Whalerr09",
+        "url": "https://github.com/Whalerr09"
+      },
+      "category": "Coding",
+      "tags": ["skill", "motion", "web-design", "webgl"],
+      "source": {
+        "source": "github",
+        "repo": "Whalerr09/UI-skill",
+        "ref": "main"
+      }
+    }
+  ]
+}

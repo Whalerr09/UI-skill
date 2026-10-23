@@ -52,12 +52,19 @@ assets/js/preloader.js       asset-aware preloader with a real exit
 assets/js/gl/ShaderCanvas.js dependency-free fullscreen WebGL host
 assets/js/gl/shaders/aurora.js  fBm aurora fragment shader
 assets/js/gl/orb.js          Three.js orb (only when geometry is required)
-examples/index.html          everything assembled, working
 ```
 
-`scripts/audit.mjs` statically checks a built folder against the hard rules in this file.
-`scripts/serve.mjs` is a zero-dependency static server for the demo (`npm run demo`).
-`bin/ui-skill.mjs` installs this folder into an agent; `install.ps1` and `install.sh` wrap it.
+`scripts/` ships with the skill, so these run from an installed copy as well:
+
+```
+scripts/audit.mjs   static check of a built folder against the hard rules in this file
+scripts/serve.mjs   zero-dependency static server (used by `npm run demo` in the repo)
+```
+
+Repository-only, not part of the installed skill: `examples/index.html` (everything
+assembled and running), `bin/ui-skill.mjs` (the installer), `install.ps1` / `install.sh`
+(Windows and macOS/Linux wrappers around it), and the `.claude-plugin` / `.qoder-plugin`
+manifests.
 
 ---
 
@@ -299,11 +306,11 @@ Detail: `references/08-accessibility.md`.
 
 ## 10. Phase 8 — Verify, then ship
 
-Run all three:
+Run all three gates:
 
 ```bash
-node scripts/audit.mjs ./dist          # static rule audit (this skill)
-npx serve ./dist                       # or the project's own preview
+node <skill-dir>/scripts/audit.mjs ./dist   # 1. the bundled static rule audit
+npx serve ./dist                            # 2. preview the production build, not a dev server
 ```
 
 Then the manual pass from `references/10-qa-checklist.md`:

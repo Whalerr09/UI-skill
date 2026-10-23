@@ -1,0 +1,24 @@
+{
+  "name": "ui-skill",
+  "displayName": "UI Motion",
+  "version": "1.0.0",
+  "description": "Build websites to award-site standard: layered scroll motion, masked type reveals, WebGL accents, a token-driven CSS system, and a hard performance and accessibility budget.",
+  "author": {
+    "name": "Whalerr09",
+    "url": "https://github.com/Whalerr09"
+  },
+  "homepage": "https://github.com/Whalerr09/UI-skill",
+  "repository": "https://github.com/Whalerr09/UI-skill",
+  "license": "MIT",
+  "keywords": [
+    "skill",
+    "css",
+    "scroll-animation",
+    "webgl",
+    "shaders",
+    "design-system",
+    "landing-page",
+    "accessibility",
+    "performance"
+  ]
+}

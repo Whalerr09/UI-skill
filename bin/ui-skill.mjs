@@ -15,7 +15,7 @@
  */
 
 import { cp, mkdir, readFile, readdir, rm, stat, symlink, writeFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
@@ -23,7 +23,10 @@ import { homedir } from 'node:os';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SKILL_NAME = 'ui-motion';
 const SKILL_ENTRY = 'SKILL.md';
-const PAYLOAD = ['SKILL.md', 'references', 'assets'];
+// The skill payload lives at skills/ui-motion/ so the repository root is also a
+// valid plugin root for Claude Code (.claude-plugin) and Qoder (.qoder-plugin).
+const SKILL_ROOT = join(ROOT, 'skills', SKILL_NAME);
+const PAYLOAD = ['SKILL.md', 'references', 'assets', 'scripts'];
 
 const C = {
   reset: '\u001b[0m',
@@ -129,6 +132,11 @@ async function pathExists(target) {
   } catch {
     return false;
   }
+}
+
+function listDir(dir, extension) {
+  if (!existsSync(dir)) return -1;
+  return readdirSync(dir).filter((name) => name.endsWith(extension)).length;
 }
 
 async function copyRecursive(from, to) {
@@ -298,14 +306,14 @@ async function installSkillFolder(targetDir, { link, force }) {
 
   if (link) {
     try {
-      await symlink(ROOT, dest, process.platform === 'win32' ? 'junction' : 'dir');
+      await symlink(SKILL_ROOT, dest, process.platform === 'win32' ? 'junction' : 'dir');
       return { dest, status: 'linked' };
     } catch (error) {
       // Windows without developer mode cannot create symlinks; copy instead.
-      const body = PAYLOAD.filter((entry) => existsSync(join(ROOT, entry)));
+      const body = PAYLOAD.filter((entry) => existsSync(join(SKILL_ROOT, entry)));
       await mkdir(dest, { recursive: true });
       for (const entry of body) {
-        const from = join(ROOT, entry);
+        const from = join(SKILL_ROOT, entry);
         const s = await stat(from);
         if (s.isDirectory()) await copyRecursive(from, join(dest, entry));
         else await cp(from, join(dest, entry));
@@ -316,7 +324,7 @@ async function installSkillFolder(targetDir, { link, force }) {
 
   await mkdir(dest, { recursive: true });
   for (const entry of PAYLOAD) {
-    const from = join(ROOT, entry);
+    const from = join(SKILL_ROOT, entry);
     if (!existsSync(from)) continue;
     const s = await stat(from);
     if (s.isDirectory()) await copyRecursive(from, join(dest, entry));
@@ -355,8 +363,8 @@ async function cmdInstall(flags) {
     return;
   }
 
-  if (!existsSync(join(ROOT, SKILL_ENTRY))) {
-    console.error(fail(`SKILL.md not found in ${ROOT}`));
+  if (!existsSync(join(SKILL_ROOT, SKILL_ENTRY))) {
+    console.error(fail(`SKILL.md not found in ${SKILL_ROOT}`));
     process.exitCode = 1;
     return;
   }
@@ -440,17 +448,22 @@ async function cmdDoctor() {
   console.log(`${paint(C.bold, 'ui-motion doctor')}\n`);
 
   const checks = [
-    ['SKILL.md', existsSync(join(ROOT, SKILL_ENTRY))],
-    ['references/', existsSync(join(ROOT, 'references'))],
-    ['assets/css/tokens.css', existsSync(join(ROOT, 'assets', 'css', 'tokens.css'))],
-    ['assets/js/reveal.js', existsSync(join(ROOT, 'assets', 'js', 'reveal.js'))],
-    ['assets/js/gl/ShaderCanvas.js', existsSync(join(ROOT, 'assets', 'js', 'gl', 'ShaderCanvas.js'))],
-    ['scripts/audit.mjs', existsSync(join(ROOT, 'scripts', 'audit.mjs'))],
+    ['skills/ui-motion/SKILL.md', existsSync(join(SKILL_ROOT, SKILL_ENTRY))],
+    [`references/ (${listDir(join(SKILL_ROOT, 'references'), '.md')} docs)`, listDir(join(SKILL_ROOT, 'references'), '.md') === 11],
+    [`assets/css/ (${listDir(join(SKILL_ROOT, 'assets', 'css'), '.css')} sheets)`, listDir(join(SKILL_ROOT, 'assets', 'css'), '.css') === 3],
+    [`assets/js/ (${listDir(join(SKILL_ROOT, 'assets', 'js'), '.js')} modules)`, listDir(join(SKILL_ROOT, 'assets', 'js'), '.js') >= 4],
+    ['assets/js/gl/ShaderCanvas.js', existsSync(join(SKILL_ROOT, 'assets', 'js', 'gl', 'ShaderCanvas.js'))],
+    ['scripts/audit.mjs', existsSync(join(SKILL_ROOT, 'scripts', 'audit.mjs'))],
+    ['.claude-plugin/marketplace.json', existsSync(join(ROOT, '.claude-plugin', 'marketplace.json'))],
+    ['.qoder-plugin/plugin.json', existsSync(join(ROOT, '.qoder-plugin', 'plugin.json'))],
+    ['examples/index.html', existsSync(join(ROOT, 'examples', 'index.html'))],
   ];
 
   for (const [label, present] of checks) {
     console.log(present ? ok(label) : fail(label));
   }
+
+  console.log(`\n${paint(C.bold, 'Payload')} ${info(SKILL_ROOT)}`);
 
   console.log(`\n${paint(C.bold, 'Installed')}\n`);
   let found = 0;

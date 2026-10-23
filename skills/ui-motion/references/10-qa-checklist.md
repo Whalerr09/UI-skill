@@ -7,9 +7,9 @@ The pre-flight pass. Run it every time, in this order. Anything unchecked is a s
 ## 1. Automatic
 
 ```bash
-node scripts/audit.mjs ./dist        # static rule audit (bundled with this skill)
-npm run build                        # or the project's own build
-npx serve ./dist                     # serve the production build, not the dev server
+node <skill-dir>/scripts/audit.mjs ./dist   # static rule audit, bundled with this skill
+npm run build                               # or the project's own build
+npx serve ./dist                            # serve the production build, not the dev server
 ```
 
 The audit fails on the hard rules: `transition: all`, animating layout properties,

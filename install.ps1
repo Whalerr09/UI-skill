@@ -73,6 +73,15 @@ function Write-Ok($Text) { Write-Host "  + $Text" -ForegroundColor Green }
 function Write-Warn($Text) { Write-Host "  ! $Text" -ForegroundColor Yellow }
 function Write-Fail($Text) { Write-Host "  x $Text" -ForegroundColor Red }
 
+# In the repository the skill lives under skills/ui-motion/. A copy of just the
+# skill folder also works, so probe both layouts.
+function Find-SkillDir([string] $Base) {
+    foreach ($candidate in @($Base, (Join-Path $Base 'skills/ui-motion'))) {
+        if (Test-Path (Join-Path $candidate 'SKILL.md')) { return $candidate }
+    }
+    return $null
+}
+
 Write-Host ''
 Write-Host "  ui-motion" -ForegroundColor White -NoNewline
 Write-Host "  agent skill installer" -ForegroundColor DarkGray
@@ -81,7 +90,7 @@ Write-Host ''
 # ---------------------------------------------------------------- locate payload
 # When piped through `irm | iex`, $PSScriptRoot is empty, so fetch a copy.
 $Root = $PSScriptRoot
-if ([string]::IsNullOrEmpty($Root) -or -not (Test-Path (Join-Path $Root 'SKILL.md'))) {
+if ([string]::IsNullOrEmpty($Root) -or -not (Find-SkillDir $Root)) {
     $Root = Join-Path ([System.IO.Path]::GetTempPath()) ("ui-skill-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
     Write-Step "Fetching skill into $Root"
 
@@ -100,12 +109,13 @@ if ([string]::IsNullOrEmpty($Root) -or -not (Test-Path (Join-Path $Root 'SKILL.m
     }
 }
 
-if (-not (Test-Path (Join-Path $Root 'SKILL.md'))) {
+$SkillDir = Find-SkillDir $Root
+if (-not $SkillDir) {
     Write-Fail "SKILL.md not found. Download the repository and run install.ps1 from its root."
     exit 1
 }
 
-Write-Ok "using $Root"
+Write-Ok "using $SkillDir"
 
 # ------------------------------------------------------------------- delegate
 $node = Get-Command node -ErrorAction SilentlyContinue
@@ -135,7 +145,7 @@ Write-Warn 'Node not found - falling back to a plain folder copy (claude, qoder)
 Write-Step 'Install Node 18+ for every target: https://nodejs.org'
 
 $names = if ($All -or $Target.Count -eq 0) { @('claude', 'qoder') } else { $Target }
-$payload = @('SKILL.md', 'references', 'assets')
+$payload = @('SKILL.md', 'references', 'assets', 'scripts')
 
 foreach ($name in $names) {
     $base = switch ($name) {
@@ -158,7 +168,7 @@ foreach ($name in $names) {
 
     New-Item -ItemType Directory -Path $dest -Force | Out-Null
     foreach ($entry in $payload) {
-        $from = Join-Path $Root $entry
+        $from = Join-Path $SkillDir $entry
         if (-not (Test-Path $from)) { continue }
         Copy-Item $from -Destination $dest -Recurse -Force
     }

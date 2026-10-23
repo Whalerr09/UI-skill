@@ -10,9 +10,9 @@
 <!-- The reveal gate must be set before the body parses, or content flashes. -->
 <script>document.documentElement.classList.add('js');</script>
 
-<link rel="stylesheet" href="../assets/css/tokens.css">
-<link rel="stylesheet" href="../assets/css/sections.css">
-<link rel="stylesheet" href="../assets/css/motion.css">
+<link rel="stylesheet" href="../skills/ui-motion/assets/css/tokens.css">
+<link rel="stylesheet" href="../skills/ui-motion/assets/css/sections.css">
+<link rel="stylesheet" href="../skills/ui-motion/assets/css/motion.css">
 
 <style>
   /* Page-local: preloader + demo-only plates. Everything else is shared. */
@@ -460,11 +460,11 @@
 <div class="vignette" aria-hidden="true"></div>
 
 <script type="module">
-  import { mountMotion } from '../assets/js/reveal.js';
-  import { mountScroll } from '../assets/js/scroll.js';
-  import { initPointer } from '../assets/js/pointer.js';
-  import { initPreloader } from '../assets/js/preloader.js';
-  import { mountAurora } from '../assets/js/gl/shaders/aurora.js';
+  import { mountMotion } from '../skills/ui-motion/assets/js/reveal.js';
+  import { mountScroll } from '../skills/ui-motion/assets/js/scroll.js';
+  import { initPointer } from '../skills/ui-motion/assets/js/pointer.js';
+  import { initPreloader } from '../skills/ui-motion/assets/js/preloader.js';
+  import { mountAurora } from '../skills/ui-motion/assets/js/gl/shaders/aurora.js';
 
   // --- preloader -----------------------------------------------------------
   const pre = initPreloader();

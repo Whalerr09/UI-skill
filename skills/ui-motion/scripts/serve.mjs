@@ -5,6 +5,8 @@
  *   npm run demo            → http://localhost:4173/examples/
  *   PORT=8080 npm run demo
  *
+ * Serves the repository root, so /examples/ can reach /skills/ui-motion/assets/.
+ *
  * Why a server at all: the demo is ES modules. Opening examples/index.html from
  * the filesystem fails with a CORS error on every import. Any static server works;
  * this one exists so there is nothing to install.
@@ -16,7 +18,7 @@ import { extname, join, normalize, resolve, sep } from 'node:path';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const PORT = Number(process.env.PORT) || 4173;
 
 const MIME = {

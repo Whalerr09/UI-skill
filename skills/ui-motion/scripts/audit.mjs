@@ -4,7 +4,7 @@
  *
  *   node scripts/audit.mjs ./dist
  *   node scripts/audit.mjs ./dist --json
- *   node scripts/audit.mjs assets examples        # several roots
+ *   node scripts/audit.mjs skills examples        # several roots
  *   node scripts/audit.mjs ./dist --strict        # warnings fail the run
  *
  * It is deliberately static: no browser, no network, no dependencies. It catches
@@ -189,6 +189,9 @@ function auditCss(file, text) {
 /* --------------------------------------------------------------------- js */
 
 function auditJs(file, text) {
+  // Node CLIs print through stdout; that is not debug logging in a page.
+  const isCli = /^#!\/usr\/bin\/env node/.test(text) || /process\.(stdout|argv|exitCode)/.test(text);
+
   const scrollListeners = (text.match(/addEventListener\(\s*['"]scroll['"]/g) || []).length;
   if (scrollListeners > 2) {
     report(file, 1, 'warn', 'scroll-listeners',
@@ -213,10 +216,12 @@ function auditJs(file, text) {
       '`document.write` after parse wipes the document.',
       'Create nodes and append them.'));
 
-  eachMatch(text, /console\.(log|debug)\s*\(/g, (m, line) =>
-    report(file, line, 'warn', 'console',
-      'Debug logging left in production code.',
-      'Strip it at build time, or gate it behind a debug flag.'));
+  if (!isCli) {
+    eachMatch(text, /console\.(log|debug)\s*\(/g, (m, line) =>
+      report(file, line, 'warn', 'console',
+        'Debug logging left in production code.',
+        'Strip it at build time, or gate it behind a debug flag.'));
+  }
 
   eachMatch(text, /will-change\s*:\s*([^;'"`]+)/gi, (m, line) => {
     if (m[1].split(',').length > 2) {
@@ -349,7 +354,11 @@ for (const file of files) {
   if (!kind) continue;
   byKind[kind.kind] += 1;
 
-  if (kind.kind === 'js' && file.size > 4 * 1024) gzipJs += gzipSync(await readFile(file.path)).length;
+  if (kind.kind === 'js' && file.size > 4 * 1024) {
+    // Node CLIs (shebang) are tooling, not something the browser downloads.
+    const source = await readFile(file.path, 'utf8');
+    if (!source.startsWith('#!')) gzipJs += gzipSync(source).length;
+  }
   if (kind.kind === 'css' && file.size > 2 * 1024) gzipCss += gzipSync(await readFile(file.path)).length;
 
   if (kind.kind === 'js' && file.size > 180 * 1024) {

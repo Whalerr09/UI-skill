@@ -32,21 +32,26 @@
   },
   "files": [
     "bin/",
-    "SKILL.md",
+    "skills/",
     "README.md",
     "LICENSE",
-    "references/",
-    "assets/",
     "examples/",
     "scripts/",
+    ".claude-plugin/",
+    ".qoder-plugin/",
+    "assets/logo.svg",
     "install.ps1",
     "install.sh"
   ],
   "scripts": {
     "skill:install": "node ./bin/ui-skill.mjs install",
     "skill:doctor": "node ./bin/ui-skill.mjs doctor",
-    "audit": "node ./scripts/audit.mjs",
-    "demo": "node ./scripts/serve.mjs"
+    "audit": "node ./skills/ui-motion/scripts/audit.mjs skills examples",
+    "audit:dist": "node ./skills/ui-motion/scripts/audit.mjs",
+    "demo": "node ./skills/ui-motion/scripts/serve.mjs",
+    "site:build": "node ./scripts/build-site.mjs",
+    "site:check": "node ./scripts/check-site.mjs",
+    "verify": "node ./scripts/validate-manifests.mjs && node ./skills/ui-motion/scripts/audit.mjs skills examples --strict && node ./bin/ui-skill.mjs doctor"
   },
   "engines": {
     "node": ">=18"

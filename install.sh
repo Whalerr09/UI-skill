@@ -85,7 +85,16 @@ printf '\n  %s  %s\n\n' "$(color 1 'ui-motion')" "$(color 2 'agent skill install
 # -------------------------------------------------------------- locate payload
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"
 
-if [ -z "${ROOT:-}" ] || [ ! -f "$ROOT/SKILL.md" ]; then
+# In the repository the skill lives at skills/ui-motion/. A copy of just the
+# skill folder also works, so probe both layouts.
+find_skill_dir() {
+  for candidate in "$1" "$1/skills/ui-motion"; do
+    if [ -f "$candidate/SKILL.md" ]; then printf '%s' "$candidate"; return 0; fi
+  done
+  return 1
+}
+
+if [ -z "${ROOT:-}" ] || ! find_skill_dir "$ROOT" >/dev/null; then
   # Running from `curl | bash`: fetch a copy to a temp dir.
   ROOT="$(mktemp -d "${TMPDIR:-/tmp}/ui-skill.XXXXXX")"
   step "Fetching skill into $ROOT"
@@ -104,12 +113,11 @@ if [ -z "${ROOT:-}" ] || [ ! -f "$ROOT/SKILL.md" ]; then
   fi
 fi
 
-if [ ! -f "$ROOT/SKILL.md" ]; then
+if ! SKILL_DIR="$(find_skill_dir "$ROOT")"; then
   fail "SKILL.md not found. Run install.sh from the repository root."
   exit 1
 fi
-
-ok "using $ROOT"
+ok "using $SKILL_DIR"
 
 # -------------------------------------------------------------------- delegate
 if command -v node >/dev/null 2>&1 && [ -f "$ROOT/bin/ui-skill.mjs" ]; then
@@ -156,9 +164,9 @@ for name in "${TARGETS[@]}"; do
 
   rm -rf "$dest"
   mkdir -p "$dest"
-  for entry in SKILL.md references assets; do
-    [ -e "$ROOT/$entry" ] || continue
-    cp -R "$ROOT/$entry" "$dest/"
+  for entry in SKILL.md references assets scripts; do
+    [ -e "$SKILL_DIR/$entry" ] || continue
+    cp -R "$SKILL_DIR/$entry" "$dest/"
   done
   ok "$name -> $dest"
 done

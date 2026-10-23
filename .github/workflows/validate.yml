@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 jobs:
-  audit:
-    name: audit + install
+  skill:
+    name: payload, manifests, installs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,15 +20,21 @@ jobs:
         with:
           node-version: 20
 
+      - name: Workflows parse
+        run: |
+          python3 -c "import glob, yaml; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]; print('workflows parse')"
+
       - name: Syntax check every module
         run: |
           set -e
-          find assets bin scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print | while read -r file; do
-            node --check "$file"
-          done
+          find skills bin scripts -type f \( -name '*.js' -o -name '*.mjs' \) -print0 |
+            while IFS= read -r -d '' file; do node --check "$file"; done
+
+      - name: Validate the Claude and Qoder plugin manifests
+        run: node scripts/validate-manifests.mjs
 
       - name: Audit the skill payload against its own rules
-        run: node scripts/audit.mjs assets examples
+        run: node skills/ui-motion/scripts/audit.mjs skills examples --strict
 
       - name: Doctor
         run: node bin/ui-skill.mjs doctor
@@ -36,35 +42,86 @@ jobs:
       - name: Install into a throwaway project
         run: |
           set -e
-          work="$(mktemp -d)"
-          cd "$work"
+          work="$(mktemp -d)"; cd "$work"
           node "$GITHUB_WORKSPACE/bin/ui-skill.mjs" install --project --target claude --target qoder
           test -f .claude/skills/ui-motion/SKILL.md
           test -f .claude/skills/ui-motion/references/01-design-language.md
           test -f .claude/skills/ui-motion/assets/js/gl/ShaderCanvas.js
+          test -f .claude/skills/ui-motion/scripts/audit.mjs
           test -f .qoder/skills/ui-motion/assets/css/tokens.css
+          # The installed copy must be able to run its own audit.
+          node .claude/skills/ui-motion/scripts/audit.mjs --help >/dev/null
 
       - name: Rules targets render
         run: |
           set -e
-          work="$(mktemp -d)"
-          cd "$work"
+          work="$(mktemp -d)"; cd "$work"
           node "$GITHUB_WORKSPACE/bin/ui-skill.mjs" install --project --target cursor --target windsurf --target agents
           grep -q '^---' .cursor/rules/ui-motion.mdc
           grep -q 'ui-motion' .windsurf/rules/ui-motion.md
           test -f ui-motion.agents.md
 
+      - name: User-level install (what the one-liner does)
+        run: |
+          set -e
+          node bin/ui-skill.mjs install --target claude --target qoder
+          test -f "$HOME/.claude/skills/ui-motion/SKILL.md"
+          test -f "$HOME/.qoder/skills/ui-motion/SKILL.md"
+          node bin/ui-skill.mjs uninstall --target claude --target qoder
+
       - name: Package contents
         run: npm pack --dry-run
 
-      - name: Reference demo is present and self-contained
+      - name: Payload is complete
         run: |
           set -e
-          for file in examples/index.html SKILL.md LICENSE README.md \
-                      assets/css/tokens.css assets/css/motion.css assets/css/sections.css \
-                      assets/js/reveal.js assets/js/scroll.js assets/js/pointer.js \
-                      assets/js/preloader.js assets/js/gl/ShaderCanvas.js \
-                      assets/js/gl/shaders/aurora.js; do
+          for file in README.md LICENSE package.json install.sh install.ps1 \
+                      .claude-plugin/plugin.json .claude-plugin/marketplace.json \
+                      .qoder-plugin/plugin.json .qoder-plugin/marketplace.json \
+                      assets/logo.svg examples/index.html \
+                      skills/ui-motion/SKILL.md \
+                      skills/ui-motion/assets/css/tokens.css \
+                      skills/ui-motion/assets/css/motion.css \
+                      skills/ui-motion/assets/css/sections.css \
+                      skills/ui-motion/assets/js/reveal.js \
+                      skills/ui-motion/assets/js/scroll.js \
+                      skills/ui-motion/assets/js/pointer.js \
+                      skills/ui-motion/assets/js/preloader.js \
+                      skills/ui-motion/assets/js/gl/ShaderCanvas.js \
+                      skills/ui-motion/assets/js/gl/shaders/aurora.js \
+                      skills/ui-motion/scripts/audit.mjs; do
             test -s "$file" || { echo "missing: $file"; exit 1; }
           done
-          echo "payload complete"
+          test "$(ls skills/ui-motion/references/*.md | wc -l)" -ge 11 || { echo 'references missing'; exit 1; }
+          echo 'payload complete'
+
+  site:
+    name: pages build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build the demo site
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}
+        run: node scripts/build-site.mjs
+
+      - name: Audit the generated site with the skill's own rules
+        run: node skills/ui-motion/scripts/audit.mjs _site --strict
+
+      - name: Every reference in the built HTML resolves on disk
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}
+        run: node scripts/check-site.mjs
+
+      - name: The demo really ships inside the artifact
+        run: |
+          set -e
+          test -s _site/examples/index.html
+          test -s _site/skills/ui-motion/assets/js/reveal.js
+          test -s _site/skills/ui-motion/assets/css/tokens.css
+          echo 'site self-check passed'
